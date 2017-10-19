@@ -1,0 +1,51 @@
+'use @oigroup/lightscript with flippedImports'
+
+import '@ormojo/ephraim': {
+  entity, field, types, observable, _debug, listOf, extendFieldDefinition
+  typeFrom
+}
+
+{ observedPrimitivesSymbol } = _debug
+
+import 'observable-utils/lib/test': testObservable
+
+test! "observe primitive field", ->
+  @entity() class Animal:
+    @field() species = "dog"
+    @field() sex = "female"
+
+  a = new Animal()
+  expect(a[observedPrimitivesSymbol]).toBe(undefined)
+  oa = observable(a)
+  subscr = testObservable(oa.species, (ev, x) -> console.log(ev, x), [
+    (x) -> x.species == "cat"
+  ])
+  expect(a[observedPrimitivesSymbol]).toBeTruthy()
+  a.species = "cat"
+  a.sex = "male"
+  subscr.unsubscribe()
+  expect(a[observedPrimitivesSymbol]).toBe(undefined)
+
+  // Placebo test to silence jest warning
+  expect(true).toBeTruthy()
+
+test! "observe complex field", ->
+  @entity() class Child:
+    @field() data = 3
+
+  @entity() class Parent:
+    @field(Child) child = {}
+
+  p = new Parent()
+  expect(p[observedPrimitivesSymbol]).toBe(undefined)
+  op = observable(p)
+  subscr = testObservable(op.child, (ev, x) -> console.log(ev, x), [
+    (x) -> x.child.data == 3
+  ])
+  expect(p[observedPrimitivesSymbol]).toBeTruthy()
+  p.child = new Child()
+  p.child.data = 4
+  subscr.unsubscribe()
+  expect(p[observedPrimitivesSymbol]).toBe(undefined)
+
+  expect(true).toBeTruthy()

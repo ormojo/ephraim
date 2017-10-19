@@ -1,0 +1,101 @@
+'use @oigroup/lightscript with flippedImports'
+
+import '@ormojo/ephraim': {
+  entity, field, types, trackDelta, deltaKeys, delta
+  flushDelta, typeOf, typeFrom
+  extendFieldDefinition
+}
+
+@entity() class E:
+  @field() anyField
+
+@entity() class D extends E:
+  @field(types.string) strField
+
+test! "empty", ->
+  @entity() class Empty {}
+  e = new Empty()
+  expect(e.__data).toEqual({})
+
+test! "declared field", ->
+  e = new E
+
+  e.anyField = 3
+  expect(e.hasOwnProperty("anyField")).toBeFalsy()
+  expect(e.__data.anyField).toBe(3)
+  expect(e.anyField).toBe(3)
+
+test! "delta", ->
+  d = new D
+  d~trackDelta!
+
+  expect(d~deltaKeys!).toEqual([])
+  expect(d~delta!).toEqual({})
+
+  d.anyField = 3
+  expect(d.__data.anyField).toBe(undefined)
+  expect(d.anyField).toBe(3)
+  expect(d~deltaKeys!).toEqual(['anyField'])
+  expect(d~delta!).toEqual({'anyField': 3})
+
+  d.strField = "hi"
+  expect(d~deltaKeys!).toEqual(['anyField', 'strField'])
+  expect(d~delta!).toEqual({'anyField': 3, 'strField': "hi"})
+
+  d~flushDelta!
+  expect(d~deltaKeys!).toEqual([])
+
+test! "typeOf.construct", ->
+  d = typeFrom(D).construct()
+  expect(typeOf(d)).toBe(D)
+
+test! "subentity", ->
+  @entity() class S extends D:
+    @field(types.string) stir
+    @field(E) subE
+
+  s = new S()
+  expect(s.subE).toBe(undefined)
+
+  e = new E()
+  s.subE = e
+  s.subE.anyField = 31337
+  s.stir = "fry"
+  expect(e.anyField).toBe(31337)
+  expect(s.subE.anyField).toBe(31337)
+
+test! "subentity autoconstruct", ->
+  @entity() class S extends D:
+    @field(types.string) stir
+    @field(E) subE = {}
+
+  s = new S()
+  console.log(s.subE)
+  expect(s.subE).toBeTruthy()
+
+test! 'circular complex', ->
+  @entity() class Child:
+    @field() parent
+    @field(types.string) info
+
+  @entity() class Parent:
+    @field(Child) child
+
+  Child~extendFieldDefinition('parent', { type: Parent })
+
+  p = new Parent()
+  c = new Child()
+  c.parent = p
+  p.child = c
+
+  console.dir(p, { depth: 10 })
+
+  expect!
+    -> c.parent = new Child()
+    .toThrow("Value assigned to 'parent' must be of type 'Parent', was of type 'Child'")
+
+  expect!
+    -> p.child = new Parent()
+    .toThrow("Value assigned to 'child' must be of type 'Child', was of type 'Parent'")
+
+  expect(true).toBeTruthy()

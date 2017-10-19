@@ -1,0 +1,176 @@
+import createSubject from 'observable-utils/lib/createSubject'
+import { observedPrimitivesSymbol } from '../observe'
+
+isEmpty(obj) ->
+  Object.keys(obj).length == 0
+
+export typeSymbol = Symbol("type")
+
+// Instances of this class represent Ephraim types.
+export class Type:
+  constructor(name) ->
+    this[typeSymbol] = this
+    this.name = name
+
+  // Construct a default instance of a type.
+  construct() ->
+    throw new Error("cannot construct abstract type")
+
+  // eslint-disable-next-line no-unused-vars
+  validate(x) -> false
+
+  // Is a type equal to another type
+  isType(x) -> x === this
+  // Is a type a kind of another type
+  isKindOf(T) -> T === this
+
+  // Get the observable ghost for an instance of this type
+  // eslint-disable-next-line no-unused-vars
+  createObservableGhost(instance) ->
+    throw new Error("cannot call this method on an abstract type")
+
+  // Check if a key of this type could receive the given value; throw
+  // standard error if not.
+  checkAssignment(key, val) ->
+    if not this.validate(val):
+      throw new Error(`Value assigned to '${key}' must be of type '${typeName(this)}', was of type '${typeOf(val).name}'`)
+
+//////////////////// Primitive types
+export class PrimitiveType extends Type:
+  constructor(name) ->
+    super(name)
+
+  construct() ->
+    throw new Error("cannot construct primitive type")
+
+  initializeField(ent, key, spec) ->
+    if spec.defaulter:
+      ent[key] = spec.defaulter.call(ent)
+
+  createSetterMethod(key) ->
+    T = this
+    // TODO: special handling for id
+    (val): void ->
+      if T != any: T.checkAssignment(key, val)
+      if this.__isDelta:
+        let delta = this.__delta
+        if not delta:
+          now delta = {}
+          this.__delta = delta
+        if delta[key] == val: return
+        delta[key] = val
+      else:
+        if this.__data[key] == val: return
+        this.__data[key] = val
+      this[observedPrimitivesSymbol]?[key]?.next(this)
+
+  createGetterMethod(key) ->
+    () ->
+      if this.__isDelta:
+        r = this.__delta?[key]
+        if r == undefined: this.__data[key] else: r
+      else:
+        this.__data[key]
+
+  getPropertyDescriptor(key) -> {
+    configurable: true
+    enumerable: true
+    get: this.createGetterMethod(key)
+    set: this.createSetterMethod(key)
+  }
+
+  // eslint-disable-next-line no-unused-vars
+  createObservableGhost(x) ->
+    throw new Error("bare primitive types are not observable")
+
+  getObservableForField(ent, k) ->
+    // Get from cache
+    let observedPrimitives = ent[observedPrimitivesSymbol]
+    if not observedPrimitives:
+      now observedPrimitives = ent[observedPrimitivesSymbol] = {}
+    let observable = observedPrimitives[k]
+    if observable: return observable
+
+    // Create.
+    // Primitive observable, when unsubbed, deletes itself, and then
+    // the whole observedPrimitives key if empty
+    now observable = createSubject({
+      onObserversChanged(observers, added, removed) ->
+        if removed and observers.length == 0:
+          delete ent[observedPrimitivesSymbol][k]
+          if ent[observedPrimitivesSymbol]~isEmpty!:
+            ent[observedPrimitivesSymbol] = undefined
+    })
+    observedPrimitives[k] = observable
+
+export any = new PrimitiveType("any")
+any.validate = -> true
+
+export nil = new PrimitiveType("nil")
+nil.validate = (x) -> x~looseEq(null)
+
+export number = new PrimitiveType("number")
+number.validate = (x) -> x~looseEq(null) or typeof x == "number"
+
+export string = new PrimitiveType("string")
+string.validate = (x) -> x~looseEq(null) or typeof x == "string"
+
+export boolean = new PrimitiveType("boolean")
+boolean.validate = (x) -> x~looseEq(null) or typeof x == "boolean"
+
+// TODO: improve this
+export integer = new PrimitiveType("integer")
+integer.validate = (x) -> x~looseEq(null) or typeof x == "number"
+
+export object = new PrimitiveType("object")
+object.validate = (x) ->
+  x~looseEq(null)
+  or (
+    typeof x == "object" and
+    (not Array.isArray(x))
+  )
+
+export array = new PrimitiveType("array")
+array.validate = (x) ->
+  x~looseEq(null)
+  or (
+    typeof x != "function" and
+    x.length >= 0
+  )
+
+// anything that could be serialized as json, opaque
+// TODO: improve this, should recurse to see if we could jsonify it
+export json = new PrimitiveType("json")
+json.validate = (x) ->
+  if x~looseEq(null): return true
+  t = typeof x
+  (
+    t == "number"
+    or t == "string"
+    or t == "boolean"
+    or t == "object"
+    or Array.isArray(x)
+  )
+
+// typeOf helper
+export typeOf(x) ->
+  if x~looseEq(null): return nil
+
+  // prims
+  t = typeof x
+  if t == "number": return number
+  elif t == "string": return string
+  elif t == "boolean": return boolean
+  if Array.isArray(x): return array
+
+  // complexes
+  constr = x.constructor
+  if constr and constr[typeSymbol]:
+    constr
+  else:
+    object
+
+// Get name of a typish thing
+export typeName(type): string ->
+  type[typeSymbol]?.name or '(anonymous type)'
+

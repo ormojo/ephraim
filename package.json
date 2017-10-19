@@ -1,0 +1,19 @@
+{
+  "name": "ephraim-monorepo",
+  "version": "0.0.1",
+  "description": "Lerna mono-repo for ephraim core packages",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ormojo/ormojo.git"
+  },
+  "author": "William C. Johnson <wcjohnson@oigroup.net> (https://github.com/wcjohnson)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ormojo/ormojo/issues"
+  },
+  "homepage": "https://github.com/ormojo/ormojo",
+  "dependencies": {
+    "lerna": "^2.0.0"
+  }
+}

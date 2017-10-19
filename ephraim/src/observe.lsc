@@ -1,0 +1,11 @@
+import { typeFrom } from './type/helpers'
+
+export observableGhostSymbol = Symbol("observableGhost")
+export observedPrimitivesSymbol = Symbol("observedPrimitives")
+
+export observable(ent) ->
+  if ent[observableGhostSymbol]: return ent[observableGhostSymbol]
+  T = typeFrom(ent) or typeFrom(ent.constructor)
+  ent[observableGhostSymbol] = T.createObservableGhost(ent)
+
+

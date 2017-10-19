@@ -1,0 +1,56 @@
+'use @oigroup/lightscript'
+
+import { typeSymbol } from './type'
+import { typeFrom } from './helpers'
+import { ComplexType } from './complex'
+
+export class EntityType extends ComplexType:
+  constructor(name, entityConstructor) ->
+    super(name)
+    this.entityConstructor = entityConstructor
+    this.fields = entityConstructor.prototype.__fields
+
+  construct() ->
+    new (this.entityConstructor)()
+
+  validate(x) ->
+    x~looseEq(null) or (x instanceof this.entityConstructor)
+
+  isKindOf(T) ->
+    (T instanceof EntityType)
+    and (
+      T.entityConstructor == this.entityConstructor or
+      this.entityConstructor.prototype instanceof T.entityConstructor
+    )
+
+  initializeField(ent, key, spec) ->
+    if spec.defaulter:
+      ent[key] = spec.type.construct()
+
+  getObservableGhostClass() ->
+    // Cache
+    if this.observableGhostClass: return this.observableGhostClass
+
+    ghost = class:
+      constructor(observedEntity) ->
+        this.__observedEntity = observedEntity
+
+    for key k, val {type} in this.fields:
+      T = typeFrom(type)
+      Object.defineProperty(ghost.prototype, k, {
+        configurable: true
+        enumerable: true
+        get: -> T.getObservableForField(this.__observedEntity, k)
+      })
+
+    this.observableGhostClass = ghost
+    ghost
+
+  createObservableGhost(ent) ->
+    new (this.getObservableGhostClass!)(ent)
+
+export isEntityConstructor(x): boolean ->
+  typeof x == "function" and (x[typeSymbol] instanceof EntityType)
+
+export isEntityType(type): boolean ->
+  type[typeSymbol] instanceof EntityType

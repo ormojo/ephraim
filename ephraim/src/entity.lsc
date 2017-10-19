@@ -1,0 +1,88 @@
+'use @oigroup/lightscript'
+
+// TODO: compile out setter typechecks on prod builds
+
+import { any, typeSymbol } from './type/type'
+import { EntityType } from './type/entity'
+import { isType, typeFrom } from './type/helpers'
+
+{ assign } = Object
+
+initializeField(ent, key, spec): void ->
+  spec.type.initializeField(ent, key, spec)
+
+checkSpecValidity(spec): void ->
+  if typeof spec != "object":
+    throw new Error("Invalid use of @field decorator, did you forget ()?")
+
+  spec.type = typeFrom(spec.type)
+
+checkFieldDefinitionValidity(proto, key, spec) ->
+  className = proto.constructor?.name or "(anonymous class)"
+  type = spec.type
+
+  // Key may not contain dot or begin with underscore
+  if ( /\./.test(key) or /^_/.test(key) ):
+    throw new Error(`Field '${key}' may not begin with '_' or contain '.'`)
+
+  if proto.__fields?[key]:
+    throw new Error(`Field '${key}' of class '${className}' is already defined`)
+
+  if not type~isType!:
+    throw new Error(`Field '${key}' of class '${className}' has invalid type`)
+
+maybeInheritFields(proto): void ->
+  // If I don't have my own fields...
+  if not proto.hasOwnProperty('__fields'):
+    // Create, inheriting from parent if possible
+    proto.__fields = {}~assign(proto.__fields)
+
+export entity(opts) ->
+  if typeof opts == "function":
+    throw new Error("Invalid use of @entity decorator, did you forget ()?")
+
+  (constructor) ->
+    proto = constructor.prototype
+    // Empty classes still inherit
+    maybeInheritFields(proto)
+
+    newConstructor = (skipInit) ->
+      this.__data = {}
+      if not skipInit:
+        for key k, val spec in this.__fields:
+          this~initializeField(k, spec)
+
+      return this
+
+    // JS type
+    newConstructor.prototype = proto
+    proto.constructor = newConstructor
+    // ephraim type
+    type = new EntityType(constructor.name, newConstructor)
+    newConstructor[typeSymbol] = type
+
+    Object.defineProperty(newConstructor, "name", { value: constructor.name })
+    newConstructor
+
+export field(spec) ->
+  if not spec: now spec = { type: any }
+  if spec~isType!:
+    now spec = { type: spec }
+  checkSpecValidity(spec)
+
+  (proto, key, descriptor) ->
+    spec.key = key
+    proto~maybeInheritFields!
+    if not spec.defaulter: spec.defaulter = descriptor.initializer
+    checkFieldDefinitionValidity(proto, key, spec)
+    proto.__fields[key] = spec
+
+    // Create new descriptor
+    spec.type.getPropertyDescriptor(key, spec)
+
+export extendFieldDefinition(entityType, fieldName, def) ->
+  T = typeFrom(entityType)
+  spec = T.fields[fieldName] = Object.assign({}, T.fields[fieldName], def)
+  checkSpecValidity(spec)
+  // Recompute field property
+  Object.defineProperty(T.entityConstructor.prototype, fieldName, spec.type.getPropertyDescriptor(fieldName, spec))
