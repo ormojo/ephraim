@@ -1,23 +1,20 @@
-export { entity, field, extendFieldDefinition } from './entity'
-
-import * as types from './type/type'
+import * as types from './primitiveTypes'
 export { types }
-export { typeOf, typeName } from './type/type'
 
-export { isType, isPrimitiveType, isa, typeFrom, isKindOf } from './type/helpers'
-export { isEntityConstructor } from './type/entity'
+export { typeOf } from './primitiveTypes'
 
-export * from './helpers'
+export {
+  Type, PrimitiveType, ComplexType, EntityType, ListType, MapType
+  typeFrom, isType, setType, listOf, isa, isKindOf
+} from './type'
 
-export { listOf } from './type/list'
+export {
+  field, entity
+} from './define'
 
-export { observable } from './observe'
+export {
+  declaredFields, declaredFieldKeys, flexFieldKeys, fieldKeys, forEachField
+} from './fields'
 
-// Debugging exports
-_debug = {}
-
-import { observedPrimitivesSymbol } from './observe'
-
-_debug.observedPrimitivesSymbol = observedPrimitivesSymbol
-
-export { _debug }
+import * as debug from './debug'
+export { debug }

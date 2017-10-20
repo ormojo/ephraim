@@ -5,6 +5,8 @@
   "license": "MIT",
   "description": "A JavaScript entity framework.",
   "main": "lib/index.cjs.js",
+  "module": "lib/index.es.js",
+  "jsnext:main": "lib/index.es.js",
   "scripts": {
     "clean": "rimraf lib coverage .nyc_output",
     "build": "rollup -c",

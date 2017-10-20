@@ -1,0 +1,94 @@
+export typeSymbol = Symbol("Type")
+
+export class Type {
+  constructor() ->
+    this[typeSymbol] = this
+
+  isKindOf(otherT): boolean ->
+    otherT == this
+
+  // Check that x is an instance of this type
+  // eslint-disable-next-line no-unused-vars
+  validate(x): boolean ->
+    false
+
+  // Called when a field of this type was defined on an EntityType.
+  // Used to set up the `defineProperty` hooks, et al.
+  // eslint-disable-next-line no-unused-vars
+  fieldOfTypeWasDefined(defineeType, key, spec): void ->
+    return
+}
+
+export class PrimitiveType extends Type {}
+
+export class ComplexType extends Type {}
+
+export class EntityType extends ComplexType {
+  defineField(key, spec): void ->
+    spec.key = key
+    this.fields[key] = spec
+    spec.type.fieldOfTypeWasDefined(this, key, spec)
+
+  setEntityConstructor(constr): void ->
+    // Wire javascript prototype propertly
+    proto = this.entityPrototype
+    constr.prototype = proto
+    proto.constructor = constr
+
+    // Wire Ephraim type properly
+    setType(constr, this)
+    this.entityConstructor = constr
+
+    // Set constructor name to typename
+    Object.defineProperty(constr, "name", { value: this.name })
+
+  isKindOf(otherT): boolean ->
+    (otherT instanceof EntityType)
+    and (
+      otherT.entityConstructor == this.entityConstructor
+      or this.entityConstructor.prototype instanceof otherT.entityConstructor
+    )
+
+  validate(x): boolean ->
+    x~looseEq(null) or (x instanceof this.entityConstructor)
+}
+
+export class ListType extends ComplexType {
+  constructor(elementType) ->
+    super()
+    this.elementType = elementType
+
+  isKindOf(otherT): boolean ->
+    (otherT instanceof ListType)
+    and (this.elementType.isKindOf(otherT.elementType))
+}
+
+export class MapType extends ComplexType {}
+
+export typeFrom(x) ->
+  x[typeSymbol]
+
+export isType(x) ->
+  t = typeof x
+  (t == "function" or t == "object") and (x[typeSymbol] instanceof Type)
+
+export setType(x, T) ->
+  x[typeSymbol] = T
+
+listOfSymbol = Symbol("listOfType")
+export listOf(T) ->
+  now T = typeFrom(T)
+  if T[listOfSymbol]: return T[listOfSymbol]
+  T[listOfSymbol] = new ListType(T)
+
+// Determine if x is-a instance of Type.
+export isa(x, T): boolean ->
+  now T = T[typeSymbol]
+  if T: T.validate(x) else: false
+
+// Determine if a Type is a kindOf anotherType
+export isKindOf(T1, T2): boolean ->
+  now T1 = T1[typeSymbol]
+  now T2 = T2[typeSymbol]
+  if T1: T1.isKindOf(T2) else: false
+

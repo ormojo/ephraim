@@ -1,7 +1,7 @@
 'use @oigroup/lightscript with flippedImports'
 
 import '@ormojo/ephraim': {
-  entity, field, listOf, types, observable
+  entity, listOf, types
 }
 
 { string, number } = types
@@ -10,10 +10,6 @@ test! "list primitive types", ->
   expect(listOf(string).isKindOf(listOf(number))).toBeFalsy()
   expect(listOf(number).isKindOf(listOf(number))).toBeTruthy()
 
-  strs = listOf(string).construct()
-  expect!
-    -> strs.push(1)
-    .toThrow("Element added to list must be of type 'string', was of type 'number'")
 
 test! "list entity types", ->
   @entity() class Animal {}
@@ -22,35 +18,3 @@ test! "list entity types", ->
   expect(listOf(Dog).isKindOf(listOf(Animal))).toBeTruthy()
   expect(listOf(Animal).isKindOf(listOf(Dog))).toBeFalsy()
   expect(listOf(Animal).isKindOf(listOf(Animal))).toBeTruthy()
-
-  expect!
-    ->
-      a = new Animal()
-      ds = listOf(Dog).construct()
-      ds.push(a)
-    .toThrow("Element added to list must be of type 'Dog', was of type 'Animal'")
-
-test! "list basics", ->
-  L = listOf(string).construct()
-
-  L.push("5")
-  L.unshift("1", "2", "wrong")
-  L.splice(2, 1, "3", "4")
-
-  rst = L.map(x -> x)
-  expect(rst).toEqual(["1", "2", "3", "4", "5"])
-
-  rst2 = []
-  L.forEach( (x, i) -> rst2.push(i, x) )
-  expect(rst2).toEqual([0, "1", 1, "2", 2, "3", 3, "4", 4, "5"])
-
-test! "list observable", ->
-  L = listOf(string).construct()
-  debugger
-  oL = observable(L)
-
-  oL.subscribe({
-    next(x) -> console.log(x)
-  })
-
-  L.push("1")

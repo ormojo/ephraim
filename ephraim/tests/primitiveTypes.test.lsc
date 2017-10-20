@@ -26,8 +26,11 @@ test! "primitive type validators", ->
 
   // isa
   expect("3"~isa(types.string)).toBeTruthy()
+  expect("3"~isa(types.number)).toBeFalsy()
   expect(3~isa(types.number)).toBeTruthy()
+  expect(3~isa(types.string)).toBeFalsy()
   expect(true~isa(types.boolean)).toBeTruthy()
+  expect(0~isa(types.boolean)).toBeFalsy()
   expect([]~isa(types.array)).toBeTruthy()
   expect({}~isa(types.object)).toBeTruthy()
 

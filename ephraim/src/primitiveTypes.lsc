@@ -1,0 +1,68 @@
+import { PrimitiveType, typeSymbol } from './type'
+
+export any = new PrimitiveType("any")
+any.validate = -> true
+
+export nil = new PrimitiveType("nil")
+nil.validate = (x) -> x~looseEq(null)
+
+export number = new PrimitiveType("number")
+number.validate = (x) -> x~looseEq(null) or typeof x == "number"
+
+export string = new PrimitiveType("string")
+string.validate = (x) -> x~looseEq(null) or typeof x == "string"
+
+export boolean = new PrimitiveType("boolean")
+boolean.validate = (x) -> x~looseEq(null) or typeof x == "boolean"
+
+// TODO: improve this
+export integer = new PrimitiveType("integer")
+integer.validate = (x) -> x~looseEq(null) or typeof x == "number"
+
+export object = new PrimitiveType("object")
+object.validate = (x) ->
+  x~looseEq(null)
+  or (
+    typeof x == "object" and
+    (not Array.isArray(x))
+  )
+
+export array = new PrimitiveType("array")
+array.validate = (x) ->
+  x~looseEq(null)
+  or (
+    typeof x != "function" and
+    x.length >= 0
+  )
+
+// anything that could be serialized as json, opaque
+// TODO: improve this, should recurse to see if we could jsonify it
+export json = new PrimitiveType("json")
+json.validate = (x) ->
+  if x~looseEq(null): return true
+  t = typeof x
+  (
+    t == "number"
+    or t == "string"
+    or t == "boolean"
+    or t == "object"
+    or Array.isArray(x)
+  )
+
+// typeOf helper
+export typeOf(x) ->
+  if x~looseEq(null): return nil
+
+  // prims
+  t = typeof x
+  if t == "number": return number
+  elif t == "string": return string
+  elif t == "boolean": return boolean
+  if Array.isArray(x): return array
+
+  // complexes
+  constr = x.constructor
+  if constr and constr[typeSymbol]:
+    constr
+  else:
+    object
