@@ -1,0 +1,85 @@
+import { EntityType, PrimitiveType, bootstrapPrototype, declaredFields, typeFrom, underlyingTypeSymbol, dataSymbol, forEachField } from '@ormojo/ephraim'
+
+import { definePrimitiveField } from './definePrimitiveField'
+import { defineEntityField } from './defineEntityField'
+import { getObservableEntityGhostClass } from './observable'
+
+export transformedTypeSymbol = Symbol.for("ephraim.transformedMemoryType")
+
+export transformType(T) ->
+  now T = typeFrom(T)
+  if T[transformedTypeSymbol]: return T[transformedTypeSymbol]
+
+  transformedType = if T instanceof PrimitiveType:
+    throw new Error("Cannot convert primitive types")
+  elif T instanceof EntityType:
+    deriveMemoryEntityType(T)
+  else:
+    throw new Error("non-EntityType not supported yet")
+
+  T[transformedTypeSymbol] = transformedType
+
+class MemoryEntityType extends EntityType {
+  defineField(key, spec): void ->
+    spec.key = key
+    this.fields[key] = spec
+    if spec.type instanceof PrimitiveType:
+      definePrimitiveField(this.entityPrototype, spec.type, key, spec)
+    else:
+      spec.type.fieldOfTypeWasDefined(this, key, spec)
+
+  fieldOfTypeWasDefined(targetType, key, spec): void ->
+    defineEntityField(targetType.entityPrototype, spec.type, key, spec)
+
+  toPlainObject(x, state) ->
+    memo = state.seen(x)
+    if memo: return memo
+    obj = {}
+    state.remember(x, obj)
+    x~forEachField((k, v, spec) ->
+      if spec:
+        obj[k] = spec.type.toPlainObject(v, state)
+      else:
+        obj[k] = v
+    )
+    obj
+
+  construct() -> new (this.entityConstructor)()
+
+  createObservableGhost(entity) ->
+    new (this~getObservableEntityGhostClass!)(entity)
+
+} // class MemoryEntityType
+
+deriveMemoryEntityType(ET) ->
+  EClass = ET.entityConstructor
+  class MemoryEntityClass extends EClass {}
+  bootstrapPrototype(MemoryEntityClass.prototype, MemoryEntityType)
+  MT = typeFrom(MemoryEntityClass)
+  MT.name = `memory(${ET.name})`
+
+  // Discard auto-created constructor in favor of simpler model
+  memoryEntityClass = (): void ->
+    this[dataSymbol] = {}
+
+  memoryEntityClass.prototype = MemoryEntityClass.prototype
+  MT.setEntityConstructor(memoryEntityClass)
+
+  // Cache now to prevent cycles/recursion
+  ET[transformedTypeSymbol] = memoryEntityClass
+  MT[transformedTypeSymbol] = memoryEntityClass
+  MT[underlyingTypeSymbol] = ET
+
+  // Update field types; each field type must be memory(previousType)
+  nextFields = {
+    ...for key k, val spec in memoryEntityClass~declaredFields():
+      nextSpec = Object.assign({}, spec)
+      if not (nextSpec.type instanceof PrimitiveType):
+        nextSpec.type = transformType(nextSpec.type)
+      {[k]: nextSpec}
+  }
+  // Apply field definitions
+  for key k, val spec in nextFields: MT.defineField(k, spec)
+
+  MT
+

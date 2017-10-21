@@ -1,0 +1,26 @@
+import { deltaSymbol, isDeltaSymbol, dataSymbol, observedFieldsSymbol, typeCheckAssignment } from '@ormojo/ephraim'
+
+createGetterMethod(proto, type, key) ->
+  () -> this[dataSymbol][key]
+
+createSetterMethod(proto, type, key) ->
+  (val): void ->
+    curVal = this[dataSymbol][key]
+    if val == curVal: return
+    typeCheckAssignment(type, key, val)
+    if this[isDeltaSymbol]:
+      let delta = this[deltaSymbol]
+      if not delta: this[deltaSymbol] = now delta = {}
+      delta[key] = true
+    this[dataSymbol][key] = val
+    this[observedFieldsSymbol]?[key]?.next(this)
+
+getPropertyDescriptor(proto, type, key, spec) -> {
+  configurable: true
+  enumerable: true
+  get: createGetterMethod(proto, type, key, spec)
+  set: createSetterMethod(proto, type, key, spec)
+}
+
+export defineEntityField(proto, type, key, spec) ->
+  Object.defineProperty(proto, key, getPropertyDescriptor(proto, type, key, spec))

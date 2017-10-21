@@ -1,0 +1,19 @@
+import { getObservableForField } from '@ormojo/ephraim'
+
+export getObservableEntityGhostClass(ET) ->
+  // Cache
+  if ET.observableGhostClass: return ET.observableGhostClass
+
+  ghost = class:
+    constructor(observedEntity) ->
+      this._observedEntity = observedEntity
+
+  for key k in ET.fields:
+    Object.defineProperty(ghost.prototype, k, {
+      configurable: true
+      enumerable: true
+      get: -> getObservableForField(this._observedEntity, k)
+    })
+
+  this.observableGhostClass = ghost
+  ghost
