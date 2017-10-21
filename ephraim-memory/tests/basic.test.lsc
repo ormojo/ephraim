@@ -33,6 +33,8 @@ test! 'circular', ->
 
   Parent~augment({ child: { type: Child }})
 
+  debugger
+
   p = create(Parent)
   p.child = create(Child)
   p.child.parent = p
