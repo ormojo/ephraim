@@ -2,7 +2,8 @@
   "lerna": "2.0.0",
   "hoist": true,
   "packages": [
-    "ephraim"
+    "ephraim",
+    "ephraim-memory"
   ],
   "version": "independent"
 }
