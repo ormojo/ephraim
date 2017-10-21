@@ -9,12 +9,29 @@ export {
 } from './type'
 
 export {
-  field, entity
+  field, entity, bootstrapPrototype, augment
 } from './define'
 
 export {
   declaredFields, declaredFieldKeys, flexFieldKeys, fieldKeys, forEachField
+  dataSymbol
 } from './fields'
+
+export {
+  deltaSymbol, isDeltaSymbol
+} from './delta'
+
+export {
+  observe, observedFieldsSymbol, getObservableForField
+} from './observe'
+
+export {
+  typeCheckAssignment, toPlainObject
+} from './util'
+
+export {
+  singleton
+} from './singleton'
 
 import * as debug from './debug'
 export { debug }

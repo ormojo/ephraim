@@ -1,0 +1,2 @@
+export deltaSymbol = Symbol.for("ephraim.delta")
+export isDeltaSymbol = Symbol.for("ephraim.isDelta")

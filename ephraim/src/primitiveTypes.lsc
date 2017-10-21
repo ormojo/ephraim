@@ -1,53 +1,81 @@
 import { PrimitiveType, typeSymbol } from './type'
+import { singleton } from './singleton'
 
-export any = new PrimitiveType("any")
-any.validate = -> true
+export any = singleton("any", ->
+  const any = new PrimitiveType("any")
+  any.validate = -> true
+  any
+)
 
-export nil = new PrimitiveType("nil")
-nil.validate = (x) -> x~looseEq(null)
+export nil = singleton("nil", ->
+  const nil = new PrimitiveType("nil")
+  nil.validate = (x) -> x~looseEq(null)
+  nil
+)
 
-export number = new PrimitiveType("number")
-number.validate = (x) -> x~looseEq(null) or typeof x == "number"
+export number = singleton("number", ->
+  const number = new PrimitiveType("number")
+  number.validate = (x) -> x~looseEq(null) or typeof x == "number"
+  number
+)
 
-export string = new PrimitiveType("string")
-string.validate = (x) -> x~looseEq(null) or typeof x == "string"
+export string = singleton("string", ->
+  const string = new PrimitiveType("string")
+  string.validate = (x) -> x~looseEq(null) or typeof x == "string"
+  string
+)
 
-export boolean = new PrimitiveType("boolean")
-boolean.validate = (x) -> x~looseEq(null) or typeof x == "boolean"
+export boolean = singleton("boolean", ->
+  const boolean = new PrimitiveType("boolean")
+  boolean.validate = (x) -> x~looseEq(null) or typeof x == "boolean"
+  boolean
+)
 
 // TODO: improve this
-export integer = new PrimitiveType("integer")
-integer.validate = (x) -> x~looseEq(null) or typeof x == "number"
+export integer = singleton("integer", ->
+  const integer = new PrimitiveType("integer")
+  integer.validate = (x) -> x~looseEq(null) or typeof x == "number"
+  integer
+)
 
-export object = new PrimitiveType("object")
-object.validate = (x) ->
-  x~looseEq(null)
-  or (
-    typeof x == "object" and
-    (not Array.isArray(x))
-  )
+export object = singleton("object", ->
+  const object = new PrimitiveType("object")
+  object.validate = (x) ->
+    x~looseEq(null)
+    or (
+      typeof x == "object" and
+      (not Array.isArray(x))
+    )
+  object
+)
 
-export array = new PrimitiveType("array")
-array.validate = (x) ->
-  x~looseEq(null)
-  or (
-    typeof x != "function" and
-    x.length >= 0
-  )
+export array = singleton("array", ->
+  const array = new PrimitiveType("array")
+  array.validate = (x) ->
+    x~looseEq(null)
+    or (
+      typeof x != "function" and
+      x.length >= 0
+    )
+  array
+)
 
 // anything that could be serialized as json, opaque
 // TODO: improve this, should recurse to see if we could jsonify it
-export json = new PrimitiveType("json")
-json.validate = (x) ->
-  if x~looseEq(null): return true
-  t = typeof x
-  (
-    t == "number"
-    or t == "string"
-    or t == "boolean"
-    or t == "object"
-    or Array.isArray(x)
-  )
+export json = singleton("json", ->
+  const json = new PrimitiveType("json")
+  json.validate = (x) ->
+    if x~looseEq(null): return true
+    t = typeof x
+    (
+      t == "number"
+      or t == "string"
+      or t == "boolean"
+      or t == "object"
+      or Array.isArray(x)
+    )
+  json
+)
 
 // typeOf helper
 export typeOf(x) ->

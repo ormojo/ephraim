@@ -1,69 +1,99 @@
-export typeSymbol = Symbol("Type")
+import { singleton } from './singleton'
 
-export class Type {
-  constructor() ->
-    this[typeSymbol] = this
+export typeSymbol = Symbol.for("ephraim.type")
+export underlyingTypeSymbol = Symbol.for("ephraim.underlyingType")
 
-  isKindOf(otherT): boolean ->
-    otherT == this
+export Type = singleton("Type", ->
+  class Type {
+    constructor() ->
+      this[typeSymbol] = this
 
-  // Check that x is an instance of this type
-  // eslint-disable-next-line no-unused-vars
-  validate(x): boolean ->
-    false
+    isKindOf(otherT): boolean ->
+      otherT == this
 
-  // Called when a field of this type was defined on an EntityType.
-  // Used to set up the `defineProperty` hooks, et al.
-  // eslint-disable-next-line no-unused-vars
-  fieldOfTypeWasDefined(defineeType, key, spec): void ->
-    return
-}
+    // Check that x is an instance of this type
+    // eslint-disable-next-line no-unused-vars
+    validate(x): boolean ->
+      false
 
-export class PrimitiveType extends Type {}
+    // Called when a field of this type was defined on an EntityType.
+    // Used to set up the `defineProperty` hooks, et al.
+    // eslint-disable-next-line no-unused-vars
+    fieldOfTypeWasDefined(defineeType, key, spec): void ->
+      return
 
-export class ComplexType extends Type {}
+    // Convert an object of this type to a plain JavaScript object.
+    toPlainObject(x) -> x
+  }
+  Type
+)
 
-export class EntityType extends ComplexType {
-  defineField(key, spec): void ->
-    spec.key = key
-    this.fields[key] = spec
-    spec.type.fieldOfTypeWasDefined(this, key, spec)
+export PrimitiveType = singleton("PrimitiveType", ->
+  class PrimitiveType extends Type {
+    createObservableGhost() ->
+      throw new Error("primitive types cannot be observed")
+  }
+  PrimitiveType
+)
 
-  setEntityConstructor(constr): void ->
-    // Wire javascript prototype propertly
-    proto = this.entityPrototype
-    constr.prototype = proto
-    proto.constructor = constr
+export ComplexType = singleton("ComplexType", ->
+  class ComplexType extends Type {}
+  ComplexType
+)
 
-    // Wire Ephraim type properly
-    setType(constr, this)
-    this.entityConstructor = constr
+export EntityType = singleton("EntityType", ->
+  class EntityType extends ComplexType {
+    defineField(key, spec): void ->
+      spec.key = key
+      this.fields[key] = spec
+      spec.type.fieldOfTypeWasDefined(this, key, spec)
 
-    // Set constructor name to typename
-    Object.defineProperty(constr, "name", { value: this.name })
+    setEntityConstructor(constr): void ->
+      // Wire javascript prototype propertly
+      proto = this.entityPrototype
+      constr.prototype = proto
+      proto.constructor = constr
 
-  isKindOf(otherT): boolean ->
-    (otherT instanceof EntityType)
-    and (
-      otherT.entityConstructor == this.entityConstructor
-      or this.entityConstructor.prototype instanceof otherT.entityConstructor
-    )
+      // Wire Ephraim type properly
+      setType(constr, this)
+      this.entityConstructor = constr
 
-  validate(x): boolean ->
-    x~looseEq(null) or (x instanceof this.entityConstructor)
-}
+      // Set constructor name to typename
+      Object.defineProperty(constr, "name", { value: this.name })
 
-export class ListType extends ComplexType {
-  constructor(elementType) ->
-    super()
-    this.elementType = elementType
+    isKindOf(otherT): boolean ->
+      (otherT instanceof EntityType)
+      and (
+        otherT.entityConstructor == this.entityConstructor
+        or this.entityConstructor.prototype instanceof otherT.entityConstructor
+      )
 
-  isKindOf(otherT): boolean ->
-    (otherT instanceof ListType)
-    and (this.elementType.isKindOf(otherT.elementType))
-}
+    validate(x): boolean ->
+      x~looseEq(null) or (x instanceof this.entityConstructor)
 
-export class MapType extends ComplexType {}
+    createObservableGhost() ->
+      throw new Error("entities without a driver cannot be observed")
+  }
+  EntityType
+)
+
+export ListType = singleton("ListType", ->
+  class ListType extends ComplexType {
+    constructor(elementType) ->
+      super()
+      this.elementType = elementType
+
+    isKindOf(otherT): boolean ->
+      (otherT instanceof ListType)
+      and (this.elementType.isKindOf(otherT.elementType))
+  }
+  ListType
+)
+
+export MapType = singleton("MapType", ->
+  class MapType extends ComplexType {}
+  MapType
+)
 
 export typeFrom(x) ->
   x[typeSymbol]
@@ -75,7 +105,7 @@ export isType(x) ->
 export setType(x, T) ->
   x[typeSymbol] = T
 
-listOfSymbol = Symbol("listOfType")
+listOfSymbol = Symbol.for("ephraim.listOfType")
 export listOf(T) ->
   now T = typeFrom(T)
   if T[listOfSymbol]: return T[listOfSymbol]

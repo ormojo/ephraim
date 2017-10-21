@@ -4,7 +4,7 @@ import { any } from './primitiveTypes'
 import { fieldsSymbol } from './fields'
 
 // Associate a prototype with an Ephraim EntityType
-bootstrapPrototype(proto, typeClass): void ->
+export bootstrapPrototype(proto, typeClass): void ->
   if not proto.hasOwnProperty(fieldsSymbol):
     // Inherit fields from parent by duplicating and assigning
     // to own fields.
@@ -71,3 +71,12 @@ export entity(spec) ->
     T.setEntityConstructor(throwOnlyConstructor)
 
     throwOnlyConstructor
+
+// Augment specifications for fields
+export augment(T, spec): void ->
+  now T = typeFrom(T)
+  for key k, val v in spec:
+    if T.fields[k]:
+      nextSpec = Object.assign({}, T.fields[k], v)
+      normalizeFieldSpec(nextSpec)
+      T.defineField(k, nextSpec)
