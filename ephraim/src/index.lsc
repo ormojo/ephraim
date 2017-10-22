@@ -22,7 +22,7 @@ export {
 } from './delta'
 
 export {
-  observe, observedFieldsSymbol, getObservableForField
+  observe, observedFieldsSymbol, observableGhostSymbol, getObservableForField
 } from './observe'
 
 export {

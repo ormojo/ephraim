@@ -1,4 +1,5 @@
 import { singleton } from './singleton'
+import { forEachField } from './fields'
 
 export typeSymbol = Symbol.for("ephraim.type")
 export underlyingTypeSymbol = Symbol.for("ephraim.underlyingType")
@@ -22,8 +23,12 @@ export Type = singleton("Type", ->
     fieldOfTypeWasDefined(defineeType, key, spec): void ->
       return
 
-    // Convert an object of this type to a plain JavaScript object.
-    toPlainObject(x) -> x
+    // Descend into this object recursively
+    recurseLeft(left) -> left
+
+    // Descend into another object recursively, mapping it onto this object
+    // eslint-disable-next-line no-unused-vars
+    recurseRight(left, right) -> left
   }
   Type
 )
@@ -73,6 +78,28 @@ export EntityType = singleton("EntityType", ->
 
     createObservableGhost() ->
       throw new Error("entities without a driver cannot be observed")
+
+    recurseLeft(left, state) ->
+      memo = state.seen(left)
+      if memo: return memo
+      obj = state.create(this)
+      state.remember(left, obj)
+      left~forEachField! (k, v, spec): void -> state.visitField(obj, k, v, spec)
+      obj
+
+    recurseRight(left, right, state) ->
+      T = this
+      memo = state.seen(right)
+      if memo: return memo
+      obj = state.create(T, right)
+      state.remember(right, obj)
+      state.iterate(right, (k, v, spec): void ->
+        if T.fields[k]:
+          state.visitCorrespondingField(left, T.fields[k], right, k, v, spec)
+        else:
+          state.visitUnknownField(left, right, k, v, spec)
+      )
+      obj
   }
   EntityType
 )
@@ -86,12 +113,26 @@ export ListType = singleton("ListType", ->
     isKindOf(otherT): boolean ->
       (otherT instanceof ListType)
       and (this.elementType.isKindOf(otherT.elementType))
+
+    recurseLeft(left, state) ->
+      T = this.elementType
+      memo = state.seen(left)
+      if memo: return memo
+      obj = state.create(this)
+      state.remember(left, obj)
+      left.forEach! (v, i): void -> state.visitListEntry(obj, i, v, T)
+      obj
   }
   ListType
 )
 
 export MapType = singleton("MapType", ->
-  class MapType extends ComplexType {}
+  class MapType extends ComplexType {
+    constructor(keyType, valueType) ->
+      super()
+      this.keyType = keyType
+      this.valueType = valueType
+  }
   MapType
 )
 
@@ -110,6 +151,14 @@ export listOf(T) ->
   now T = typeFrom(T)
   if T[listOfSymbol]: return T[listOfSymbol]
   T[listOfSymbol] = new ListType(T)
+
+mapOfSymbol = Symbol.for("ephraim.mapOfType")
+export mapOf(T1, T2) ->
+  now T1 = typeFrom(T1)
+  now T2 = typeFrom(T2)
+  if T1[mapOfSymbol]?[T2.name]: return T1[mapOfSymbol][T2.name]
+  T1[mapOfSymbol] = T1[mapOfSymbol] or {}
+  T1[mapOfSymbol][T2.name] = new MapType(T1, T2)
 
 // Determine if x is-a instance of Type.
 export isa(x, T): boolean ->

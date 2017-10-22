@@ -15,5 +15,5 @@ export getObservableEntityGhostClass(ET) ->
       get: -> getObservableForField(this._observedEntity, k)
     })
 
-  this.observableGhostClass = ghost
+  ET.observableGhostClass = ghost
   ghost

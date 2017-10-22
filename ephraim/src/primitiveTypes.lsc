@@ -89,6 +89,7 @@ export typeOf(x) ->
   if Array.isArray(x): return array
 
   // complexes
+  if x[typeSymbol]: return x[typeSymbol]
   constr = x.constructor
   if constr and constr[typeSymbol]:
     constr

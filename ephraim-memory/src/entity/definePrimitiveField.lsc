@@ -21,7 +21,10 @@ createSetterMethod(proto, type, key) ->
     else:
       if this[dataSymbol][key] == val: return
       this[dataSymbol][key] = val
-    this[observedFieldsSymbol]?[key]?.next(this)
+    observedFields = this[observedFieldsSymbol]
+    if observedFields:
+      observedFields[key]?.next(this)
+      observedFields._all_?.next({entity: this, key})
 
 getPropertyDescriptor(proto, type, key, spec) -> {
   configurable: true
