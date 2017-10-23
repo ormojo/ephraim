@@ -38,6 +38,13 @@ export integer = singleton("integer", ->
   integer
 )
 
+// TODO: improve this
+export date = singleton("integer", ->
+  const date = new PrimitiveType("date")
+  date.validate = (x) -> x~looseEq(null) or x instanceof Date
+  date
+)
+
 export object = singleton("object", ->
   const object = new PrimitiveType("object")
   object.validate = (x) ->
