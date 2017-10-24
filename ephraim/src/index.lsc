@@ -37,6 +37,3 @@ export {
   transformType as transformMemoryType,
   create as createMemory
 } from './memoryDriver'
-
-import * as debug from './debug'
-export { debug }

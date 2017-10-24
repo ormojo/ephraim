@@ -5,8 +5,7 @@
       {
         "env": {
           "targets": { "ie": 10 }
-        },
-        "additionalPlugins": ["babel-plugin-external-helpers"]
+        }
       }
     ]
   ]

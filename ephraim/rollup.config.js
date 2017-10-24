@@ -9,10 +9,11 @@ if (process.env.COVERAGE === "true") coverage = true;
 var babelRC = JSON.parse(fs.readFileSync('./.babelrc', { encoding: 'UTF-8'}))
 babelRC.babelrc = false;
 babelRC.presets[0][1].env.modules = false
+babelRC.presets[0][1].additionalPlugins = babelRC.presets[0][1].additionalPlugins || [];
+babelRC.presets[0][1].additionalPlugins.push("babel-plugin-external-helpers");
 
 if(coverage) {
   // Add Istanbul code coverage
-  babelRC.presets[0][1].additionalPlugins = babelRC.presets[0][1].additionalPlugins || [];
   babelRC.presets[0][1].additionalPlugins.push("babel-plugin-istanbul");
 }
 
