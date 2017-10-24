@@ -87,19 +87,16 @@ export EntityType = singleton("EntityType", ->
       left~forEachField! (k, v, spec): void -> state.visitField(obj, k, v, spec)
       obj
 
-    recurseRight(left, right, state) ->
+    recurseRight(left, right, state): void ->
       T = this
-      memo = state.seen(right)
-      if memo: return memo
-      obj = state.create(T, right)
-      state.remember(right, obj)
-      state.iterate(right, (k, v, spec): void ->
+      state.remember(right, left)
+      state.iterate(right, (k, v): void ->
+        seen = state.seen(v)
         if T.fields[k]:
-          state.visitCorrespondingField(left, T.fields[k], right, k, v, spec)
+          state.visitCorrespondingField(left, T.fields[k], right, k, v, seen)
         else:
-          state.visitUnknownField(left, right, k, v, spec)
+          state.visitUnknownField(left, right, k, v, seen)
       )
-      obj
   }
   EntityType
 )
@@ -128,16 +125,14 @@ export ListType = singleton("ListType", ->
       left.forEach! (v, i): void -> state.visitListEntry(obj, i, v, T)
       obj
 
-    recurseRight(left, right, state) ->
+    recurseRight(left, right, state): void ->
       T = this.elementType
-      memo = state.seen(right)
-      if memo: return memo
-      obj = state.create(this, right)
-      state.remember(right, obj)
+      state.remember(right, left)
       if typeof(right.forEach) != "function":
         throw new Error("ListType.recurseRight: rhs wasn't an array or list. This is most likely caused by using assignPlainObject on an object with a list key, but a non-list value.")
-      right.forEach! (v, i): void -> state.visitListEntry(left, T, right, i, v)
-      obj
+      right.forEach! (v, i): void ->
+        seen = state.seen(v)
+        state.visitListEntry(left, T, right, i, v, seen)
   }
   ListType
 )
