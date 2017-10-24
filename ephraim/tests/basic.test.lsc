@@ -1,5 +1,4 @@
-import { entity, field, augment, toPlainObject } from '@ormojo/ephraim'
-import { create } from '@ormojo/ephraim-memory'
+import { entity, field, augment, toPlainObject, createMemory as create } from '@ormojo/ephraim'
 
 test! 'basic', ->
   @entity() class E:

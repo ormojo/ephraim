@@ -1,0 +1,36 @@
+import { entity, field, toPlainObject, assignPlainObject, types, listOf, createMemory as create } from '@ormojo/ephraim'
+
+test! "basic assign", ->
+  @entity() class E:
+    @field(types.string) str
+
+  e = create(E)
+  e~assignPlainObject({ str: "str" })
+  console.log(e~toPlainObject!)
+  expect(e~toPlainObject!).toEqual({str: "str"})
+
+test! "deep assign", ->
+  @entity() class E:
+    @field(types.string) str
+
+  @entity() class D:
+    @field(E) subE
+
+  d = create(D)
+  d~assignPlainObject({ subE: { str: "str" } })
+  console.log(d~toPlainObject!)
+  expect(d~toPlainObject!).toEqual({ subE: { str: "str" } })
+
+
+test! "list assign", ->
+  @entity() class E:
+    @field(types.string) str
+
+  @entity() class D:
+    @field(listOf(E)) es
+
+  d = create(D)
+  debugger
+  d~assignPlainObject({ es: [ { str: "1"}, { str: "2"}, { str: "3"} ] })
+  console.log(d~toPlainObject!)
+  expect(d~toPlainObject!).toEqual({ es: [ { str: "1"}, { str: "2"}, { str: "3"} ] })

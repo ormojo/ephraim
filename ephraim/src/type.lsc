@@ -114,6 +114,11 @@ export ListType = singleton("ListType", ->
       (otherT instanceof ListType)
       and (this.elementType.isKindOf(otherT.elementType))
 
+    validate(x): boolean ->
+      x~looseEq(null) or (
+        x[typeSymbol] and x[typeSymbol].isKindOf(this)
+      )
+
     recurseLeft(left, state) ->
       T = this.elementType
       memo = state.seen(left)
@@ -121,6 +126,17 @@ export ListType = singleton("ListType", ->
       obj = state.create(this)
       state.remember(left, obj)
       left.forEach! (v, i): void -> state.visitListEntry(obj, i, v, T)
+      obj
+
+    recurseRight(left, right, state) ->
+      T = this.elementType
+      memo = state.seen(right)
+      if memo: return memo
+      obj = state.create(this, right)
+      state.remember(right, obj)
+      if typeof(right.forEach) != "function":
+        throw new Error("ListType.recurseRight: rhs wasn't an array or list. This is most likely caused by using assignPlainObject on an object with a list key, but a non-list value.")
+      right.forEach! (v, i): void -> state.visitListEntry(left, T, right, i, v)
       obj
   }
   ListType

@@ -1,4 +1,6 @@
-import { typeOf, setType, observableGhostSymbol } from '@ormojo/ephraim'
+import { typeOf } from '../../primitiveTypes'
+import { setType } from '../../type'
+import { observableGhostSymbol } from '../../observe'
 
 // List entry typechecks
 typeCheck(T, ...vals) ->

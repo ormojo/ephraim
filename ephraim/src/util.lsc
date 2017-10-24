@@ -1,5 +1,5 @@
 import { typeOf } from './primitiveTypes'
-import { typeFrom, EntityType, ListType } from './type'
+import { typeFrom, EntityType, ListType, PrimitiveType } from './type'
 
 // Typecheck an assignment of val to a key of type T, throwing a standard
 // error message if the typecheck fails.
@@ -34,3 +34,39 @@ export toPlainObject(x) ->
   T = typeFrom(typeOf(x))
   state = objectConversionState()
   T.recurseLeft(x, state)
+
+// Assign plain object
+objectAssignmentState() -> {
+  seen(x) -> this.map?.get(x)
+  remember(x, val): void ->
+    if not this.map: this.map = new Map()
+    this.map.set(x, val)
+  create() -> true
+  iterate(x, f): void ->
+    if typeof(x) != "object":
+      throw new Error("assignPlainObject: attempt to iterate non-object. This usually means you are assigning an incompatible structure.")
+    for key k, val v in x: f(k, v)
+  visitCorrespondingField(left, lspec, right, k, v, rspec): void ->
+    if lspec.type instanceof PrimitiveType:
+      left[k] = v
+    else:
+      if not left[k]: left[k] = lspec.type.construct()
+      lspec.type.recurseRight(left[k], v, this)
+  visitUnknownField(left, right, k, v, spec): void ->
+    left[k] = v
+  visitListEntry(list, listET, ary, i, v): void ->
+    if listET instanceof PrimitiveType:
+      list.set(i, v)
+    else:
+      let elt = list.get(i)
+      if not elt:
+        now elt = listET.construct()
+        list.set(i, elt)
+      listET.recurseRight(elt, v, this)
+
+}
+
+export assignPlainObject(x, y) ->
+  T = typeFrom(typeOf(x))
+  state = objectAssignmentState()
+  T.recurseRight(x, y, state)

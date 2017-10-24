@@ -1,4 +1,4 @@
-import { getObservableForField } from '@ormojo/ephraim'
+import { getObservableForField } from '../../observe'
 
 export getObservableEntityGhostClass(ET) ->
   // Cache

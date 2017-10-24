@@ -1,5 +1,4 @@
-import { entity, field, observe, toPlainObject } from '@ormojo/ephraim'
-import { create } from '@ormojo/ephraim-memory'
+import { entity, field, observe, toPlainObject, createMemory as create } from '@ormojo/ephraim'
 import testObservable from 'observable-utils/lib/test'
 
 test! 'observe', ->

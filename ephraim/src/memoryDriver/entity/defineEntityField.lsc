@@ -1,4 +1,7 @@
-import { deltaSymbol, isDeltaSymbol, dataSymbol, observedFieldsSymbol, typeCheckAssignment } from '@ormojo/ephraim'
+import { deltaSymbol, isDeltaSymbol } from '../../delta'
+import { dataSymbol } from '../../fields'
+import { typeCheckAssignment } from '../../util'
+import { observedFieldsSymbol } from '../../observe'
 
 createGetterMethod(proto, type, key) ->
   () -> this[dataSymbol][key]

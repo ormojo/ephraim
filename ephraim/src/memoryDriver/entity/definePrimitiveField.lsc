@@ -1,5 +1,8 @@
-import { deltaSymbol, isDeltaSymbol, dataSymbol, types, observedFieldsSymbol } from '@ormojo/ephraim'
-{ any } = types
+import { deltaSymbol, isDeltaSymbol } from '../../delta'
+import { dataSymbol } from '../../fields'
+import { typeCheckAssignment } from '../../util'
+import { observedFieldsSymbol } from '../../observe'
+import { any } from '../../primitiveTypes'
 
 createGetterMethod(proto, type, key) ->
   () ->
@@ -12,7 +15,7 @@ createGetterMethod(proto, type, key) ->
 createSetterMethod(proto, type, key) ->
   // TODO: special handling for id
   (val): void ->
-    if type != any: type.checkAssignment(key, val)
+    if type != any: typeCheckAssignment(type, key, val)
     if this[isDeltaSymbol]:
       let delta = this[deltaSymbol]
       if not delta: this[deltaSymbol] = now delta = {}

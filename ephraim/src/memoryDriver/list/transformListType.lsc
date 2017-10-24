@@ -1,4 +1,6 @@
-import { PrimitiveType, ListType, underlyingTypeSymbol, observableGhostSymbol } from '@ormojo/ephraim'
+import { PrimitiveType, ListType, underlyingTypeSymbol } from '../../type'
+import { observableGhostSymbol } from '../../observe'
+
 import createSubject from 'observable-utils/lib/createSubject'
 
 import { defineEntityField } from '../entity/defineEntityField'

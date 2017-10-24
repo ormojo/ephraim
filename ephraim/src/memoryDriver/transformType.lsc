@@ -1,4 +1,4 @@
-import { EntityType, PrimitiveType, ListType, typeFrom } from '@ormojo/ephraim'
+import { EntityType, PrimitiveType, ListType, typeFrom } from '../type'
 
 import transformedTypeSymbol from './transformedTypeSymbol'
 import { transformEntityType } from './entity/transformEntityType'

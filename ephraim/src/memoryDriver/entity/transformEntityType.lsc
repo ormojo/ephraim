@@ -1,4 +1,6 @@
-import { EntityType, PrimitiveType, bootstrapPrototype, declaredFields, typeFrom, underlyingTypeSymbol, dataSymbol } from '@ormojo/ephraim'
+import { EntityType, PrimitiveType, typeFrom, underlyingTypeSymbol } from '../../type'
+import { bootstrapPrototype } from '../../define'
+import { declaredFields, dataSymbol } from '../../fields'
 
 import { definePrimitiveField } from './definePrimitiveField'
 import { defineEntityField } from './defineEntityField'

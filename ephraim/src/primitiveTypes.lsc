@@ -39,9 +39,9 @@ export integer = singleton("integer", ->
 )
 
 // TODO: improve this
-export date = singleton("integer", ->
+export date = singleton("date", ->
   const date = new PrimitiveType("date")
-  date.validate = (x) -> x~looseEq(null) or x instanceof Date
+  date.validate = (x) -> x~looseEq(null) or (x instanceof Date)
   date
 )
 
@@ -96,6 +96,7 @@ export typeOf(x) ->
   if Array.isArray(x): return array
 
   // complexes
+  if x instanceof Date: return date
   if x[typeSymbol]: return x[typeSymbol]
   constr = x.constructor
   if constr and constr[typeSymbol]:

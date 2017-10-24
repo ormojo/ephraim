@@ -10,14 +10,21 @@ export bootstrapPrototype(proto, typeClass): void ->
     // to own fields.
     nextFields = Object.assign({}, proto[fieldsSymbol])
     proto[fieldsSymbol] = nextFields
+
+    // Figure out if this is going to extend something
+    extendsProto = Object.getPrototypeOf(proto)
+    extendsType = if extendsProto?.constructor: typeFrom(extendsProto.constructor)
+
     // Create EntityType and associate it with the constructor
     T = new typeClass()
     T.fields = nextFields
     T.name = proto.constructor.name
     T.entityPrototype = proto
+    T.extendsType = extendsType
+    T.entitySpec = Object.assign({}, extendsType?.entitySpec)
     proto.constructor~setType(T)
 
-normalizeFieldSpec(spec): void ->
+normalizeFieldSpec(spec) ->
   if not spec: return { type: any }
   if spec~isType!: return { type: typeFrom(spec) }
   if typeof(spec) != "object":
@@ -31,9 +38,6 @@ normalizeFieldSpec(spec): void ->
 // @field decorator
 export field(spec) ->
   now spec = normalizeFieldSpec(spec)
-
-  if typeof(spec) != "object":
-    throw new Error("Invalid use of @field decorator, did you forget ()?")
 
   (proto, key, descriptor) ->
     // Key may not contain dot or begin with underscore
@@ -50,10 +54,28 @@ export field(spec) ->
       set: -> throw new Error("setting abstract entity property")
     }
 
+// @extendField decorator
+export extendField(spec) ->
+  (proto, key, descriptor) ->
+    bootstrapPrototype(proto, EntityType)
+    T = typeFrom(proto.constructor)
+    lastSpec = T.fields[key]
+    if not lastSpec:
+      throw new Error(`@extendField() must extend an existing field.`)
+    nextSpec = normalizeFieldSpec(Object.assign({}, lastSpec, spec))
+    if descriptor.initializer: nextSpec.initializer = descriptor.initializer
+    T.defineField(key, nextSpec)
+    {
+      configurable: true, enumerable: true
+      get: -> undefined
+      set: -> throw new Error("setting abstract entity property")
+    }
+
 normalizeEntitySpec(spec) ->
   if spec == undefined: now spec = {}
   if typeof(spec) != "object":
     throw new Error("Entity specification must be an object. (Did you forget () after a decorator?)")
+  spec
 
 // @entity decorator
 export entity(spec) ->
@@ -63,7 +85,7 @@ export entity(spec) ->
     proto = constructor.prototype
     bootstrapPrototype(proto, EntityType)
     T = typeFrom(proto.constructor)
-    T.entitySpec = spec
+    Object.assign(T.entitySpec, spec)
 
     throwOnlyConstructor = () ->
       throw new Error("cannot construct entity without a driver")
