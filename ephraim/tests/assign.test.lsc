@@ -83,6 +83,7 @@ test! 'circular assign list', ->
   console.log(plain)
 
   loe2 = create(listOf(E))
+  debugger
   loe2~assignPlainObject(plain)
   console.log(loe2~toPlainObject!)
   expect(loe2.get(1)).toBe(loe2.get(2))

@@ -1,5 +1,6 @@
 import { typeOf } from './primitiveTypes'
 import { typeFrom, EntityType, ListType, PrimitiveType } from './type'
+import { declaredFields } from './fields'
 
 // Typecheck an assignment of val to a key of type T, throwing a standard
 // error message if the typecheck fails.
@@ -74,3 +75,8 @@ export assignPlainObject(x, y): void ->
   T = typeFrom(typeOf(x))
   state = objectAssignmentState()
   T.recurseRight(x, y, state)
+
+export initialize(ent, creator): void ->
+  for key k, val spec in ent~declaredFields():
+    if spec.initializer:
+      ent[k] = spec.type.initialize(ent, spec, creator, spec.initializer)

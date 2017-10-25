@@ -25,7 +25,7 @@ class MemoryListType extends ListType {
 
 export transformListType(LT) ->
   ET = if LT.elementType instanceof PrimitiveType: LT.elementType else: transformType(LT.elementType)
-  MT = new MemoryListType(ET)
+  MT = new MemoryListType(LT, ET)
   MT.name = `memory(listOf(${ET.name}))`
 
   // Cache now to prevent cycles/recursion

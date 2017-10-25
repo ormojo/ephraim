@@ -23,9 +23,17 @@ test! "basic list", ->
   @entity() class A:
     @field() a
 
+  debugger
   listOfA = create(listOf(A))
 
   listOfA.push(create(A))
 
-  debugger
   console.log(listOfA~toPlainObject!)
+
+test! "list field init", ->
+  @entity() class E:
+    @field(listOf(types.string)) strs = []
+
+  e = create(E)
+  expect(e.strs.length).toBe(0)
+

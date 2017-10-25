@@ -8,6 +8,14 @@ test! 'basic', ->
   e.f = 1
   expect(e.f).toBe(1)
 
+test! 'init', ->
+  @entity() class E:
+    @field() f = 1
+
+  debugger
+  e = create(E)
+  expect(e.f).toBe(1)
+
 test! 'subentity', ->
   @entity() class E:
     @field() e
@@ -18,6 +26,18 @@ test! 'subentity', ->
   f = create(F)
   f.subE = create(E)
   f.subE.e = 1
+
+  expect(f.subE.e).toBe(1)
+  expect(f~toPlainObject!).toEqual({ subE: { e: 1 }})
+
+test! 'subentity init', ->
+  @entity() class E:
+    @field() e = 1
+
+  @entity() class F:
+    @field(E) subE = {}
+
+  f = create(F)
 
   expect(f.subE.e).toBe(1)
   expect(f~toPlainObject!).toEqual({ subE: { e: 1 }})

@@ -6,8 +6,9 @@ export underlyingTypeSymbol = Symbol.for("ephraim.underlyingType")
 
 export Type = singleton("Type", ->
   class Type {
-    constructor() ->
+    constructor(baseType) ->
       this[typeSymbol] = this
+      this.extra = Object.assign({}, baseType?.extra)
 
     isKindOf(otherT): boolean ->
       otherT == this
@@ -35,8 +36,15 @@ export Type = singleton("Type", ->
 
 export PrimitiveType = singleton("PrimitiveType", ->
   class PrimitiveType extends Type {
+    constructor(name) ->
+      super(null)
+      this.name = name
+
     createObservableGhost() ->
       throw new Error("primitive types cannot be observed")
+
+    initialize(entity, spec, creator, initializer) ->
+      initializer.call(entity)
   }
   PrimitiveType
 )
@@ -52,6 +60,9 @@ export EntityType = singleton("EntityType", ->
       spec.key = key
       this.fields[key] = spec
       spec.type.fieldOfTypeWasDefined(this, key, spec)
+
+    initialize(entity, spec, creator, initializer) ->
+      creator(this)
 
     setEntityConstructor(constr): void ->
       // Wire javascript prototype propertly
@@ -103,9 +114,12 @@ export EntityType = singleton("EntityType", ->
 
 export ListType = singleton("ListType", ->
   class ListType extends ComplexType {
-    constructor(elementType) ->
-      super()
+    constructor(baseType, elementType) ->
+      super(baseType)
       this.elementType = elementType
+
+    initialize(entity, spec, creator, initializer) ->
+      creator(this)
 
     isKindOf(otherT): boolean ->
       (otherT instanceof ListType)
@@ -161,7 +175,7 @@ listOfSymbol = Symbol.for("ephraim.listOfType")
 export listOf(T) ->
   now T = typeFrom(T)
   if T[listOfSymbol]: return T[listOfSymbol]
-  T[listOfSymbol] = new ListType(T)
+  T[listOfSymbol] = new ListType(null, T)
 
 mapOfSymbol = Symbol.for("ephraim.mapOfType")
 export mapOf(T1, T2) ->

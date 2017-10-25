@@ -18,7 +18,7 @@ export {
 } from './fields'
 
 export {
-  deltaSymbol, isDeltaSymbol
+  deltaSymbol, isDeltaSymbol, isDelta
 } from './delta'
 
 export {

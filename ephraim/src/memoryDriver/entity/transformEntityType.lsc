@@ -30,7 +30,7 @@ class MemoryEntityType extends EntityType {
 export transformEntityType(ET) ->
   EClass = ET.entityConstructor
   class MemoryEntityClass extends EClass {}
-  bootstrapPrototype(MemoryEntityClass.prototype, MemoryEntityType)
+  bootstrapPrototype(MemoryEntityClass.prototype, MemoryEntityType, ET)
   MT = typeFrom(MemoryEntityClass)
   MT.name = `memory(${ET.name})`
 
