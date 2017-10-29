@@ -30,7 +30,8 @@ export fieldKeys(ent) ->
 // Iterate over all field keys and values, flex and declared
 export forEachField(ent, f): void ->
   for key k, val spec in ent[fieldsSymbol]:
-    f(k, ent[k], spec)
+    v = ent[k]
+    if v != undefined: f(k, ent[k], spec)
 
   for key k, val v in ent:
     if k.charCodeAt(0) != 95 and typeof(v) != "function":

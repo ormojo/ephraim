@@ -18,8 +18,8 @@
     "preversion": "npm run lint && npm run test"
   },
   "devDependencies": {
-    "@oigroup/babel-preset-lightscript": "^3.0.0-beta.5",
-    "@oigroup/lightscript-eslint": "^3.0.0-beta.5",
+    "@oigroup/babel-preset-lightscript": "^3.0.0",
+    "@oigroup/lightscript-eslint": "^3.0.0",
     "babel-cli": "^6.26.0",
     "babel-plugin-istanbul": "^4.1.5",
     "babel-plugin-external-helpers": "^6.22.0",
