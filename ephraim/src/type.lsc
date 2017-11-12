@@ -30,6 +30,13 @@ export Type = singleton("Type", ->
     // Descend into another object recursively, mapping it onto this object
     // eslint-disable-next-line no-unused-vars
     recurseRight(left, right) -> left
+
+    // Set type extra data. This is inherited (via Object.assign) when a new
+    // type is created based on this one.
+    setExtra(key, value) -> this.extra[key] = value
+
+    // Get type extra data
+    getExtra(key) -> this.extra[key]
   }
   Type
 )
