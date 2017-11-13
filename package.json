@@ -2,7 +2,9 @@
   "name": "ephraim-monorepo",
   "version": "0.0.1",
   "description": "Lerna mono-repo for ephraim core packages",
-  "scripts": {},
+  "scripts": {
+    "build": "lerna run build"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/ormojo/ormojo.git"
