@@ -8,6 +8,7 @@ test! 'observe', ->
   e = create(E)
   oe = observe(e)
   sub = testObservable(oe.f, (ev, x) -> console.log(ev, x~toPlainObject!), [
+    (x) -> x.f == undefined
     (x) -> x.f == 1
     (x) -> x.f == 2
     (x) -> x.f == 3
@@ -31,6 +32,7 @@ test! 'observe child', ->
   p = create(Parent)
   op = observe(p)
   sub = testObservable(op.child, (ev, x) -> console.log(ev, x~toPlainObject!), [
+    (x) -> x.child == undefined
     (x) -> now storage = x.child
     (x) -> x.child != storage
   ])

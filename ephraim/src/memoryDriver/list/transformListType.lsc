@@ -1,7 +1,7 @@
 import { PrimitiveType, ListType, underlyingTypeSymbol } from '../../type'
 import { observableGhostSymbol } from '../../observe'
 
-import createSubject from 'observable-utils/lib/createSubject'
+import createBehaviorSubject from 'observable-utils/lib/createBehaviorSubject'
 
 import { defineEntityField } from '../entity/defineEntityField'
 import transformedTypeSymbol from '../transformedTypeSymbol'
@@ -15,7 +15,8 @@ class MemoryListType extends ListType {
   construct() -> new MemoryList(this)
 
   createObservableGhost(ent) ->
-    createSubject({
+    createBehaviorSubject({
+      initialValue: ent
       onObserversChanged(observers, added, removed) ->
         if removed and observers.length == 0:
           delete ent[observableGhostSymbol]
