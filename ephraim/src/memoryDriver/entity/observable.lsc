@@ -15,5 +15,12 @@ export getObservableEntityGhostClass(ET) ->
       get: -> getObservableForField(this._observedEntity, k)
     })
 
+  // _all_ pseudofield observes a change in any field
+  Object.defineProperty(ghost.prototype, '_all_', {
+    configurable: true
+    enumerable: false
+    get: -> getObservableForField(this._observedEntity, '_all_')
+  })
+
   ET.observableGhostClass = ghost
   ghost

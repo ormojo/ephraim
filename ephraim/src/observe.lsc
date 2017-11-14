@@ -21,11 +21,15 @@ export getObservableForField(ent, k) ->
   let observable = observedFields[k]
   if observable: return observable
 
+  // Initial value is the entity, or for field named _all_, a nonce object
+  // containing the entity
+  initialValue = if k == "_all_": { entity: ent } else: ent
+
   // Create.
   // Primitive observable, when unsubbed, deletes itself, and then
   // the whole observedPrimitives key if empty
   opts = {
-    initialValue: ent
+    initialValue
     onObserversChanged(observers, added, removed) ->
       if removed and observers.length == 0:
         delete ent[observedFieldsSymbol][k]
