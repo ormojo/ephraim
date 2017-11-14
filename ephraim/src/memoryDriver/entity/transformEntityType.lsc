@@ -37,6 +37,8 @@ export transformEntityType(ET) ->
   // Discard auto-created constructor in favor of simpler model
   memoryEntityClass = (): void ->
     this[dataSymbol] = {}
+  // Set constructor name to typename
+  Object.defineProperty(memoryEntityClass, "name", { value: MT.name })
 
   memoryEntityClass.prototype = MemoryEntityClass.prototype
   MT.setEntityConstructor(memoryEntityClass)
