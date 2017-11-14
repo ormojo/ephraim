@@ -80,3 +80,5 @@ export initialize(ent, creator): void ->
   for key k, val spec in ent~declaredFields():
     if spec.initializer:
       ent[k] = spec.type.initialize(ent, spec, creator, spec.initializer)
+
+  ent._init?()
