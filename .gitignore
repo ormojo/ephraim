@@ -1,3 +1,4 @@
 /node_modules
 /lerna-debug.log
 /ephraim/package-lock.json
+.DS_Store
